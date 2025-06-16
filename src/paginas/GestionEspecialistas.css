@@ -1,0 +1,209 @@
+.gestion-especialistas-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.gestion-especialistas-container h2 {
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.especialistas-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lista-especialistas {
+    border-right: 1px solid #eee;
+    padding-right: 20px;
+}
+
+.especialista-item {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.especialista-item:hover {
+    background-color: #e9ecef;
+}
+
+.especialista-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.especialidades-section {
+    padding-left: 20px;
+}
+
+.especialidades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.especialidad-item {
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.especialidad-item:hover {
+    background-color: #e9ecef;
+}
+
+.especialidad-item.assigned {
+    background-color: #28a745;
+    color: white;
+}
+
+.especialidad-item.assigned:hover {
+    background-color: #218838;
+}
+
+h3 {
+    color: #495057;
+    margin-bottom: 20px;
+}
+
+.especialistas-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.especialistas-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.especialistas-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.especialistas-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.especialidad-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 2px;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.especialidades-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    margin-bottom: 20px;
+}
+
+.especialidad-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.especialidad-checkbox:hover {
+    background-color: #e0e0e0;
+}
+
+.especialidad-checkbox input {
+    margin-right: 6px;
+}
+
+.horario-item {
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f5f5;
+    padding: 6px;
+    margin: 4px 0;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.dia-semana {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 2px;
+}
+
+.horario-tiempo {
+    color: #34495e;
+}
+
+.horarios-container {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.horario-edit-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.horario-edit-item select,
+.horario-edit-item input {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.btn-eliminar-horario {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-agregar-horario {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    align-self: flex-start;
+}
+
+.btn-eliminar-horario:hover {
+    background-color: #c82333;
+}
+
+.btn-agregar-horario:hover {
+    background-color: #218838;
+}

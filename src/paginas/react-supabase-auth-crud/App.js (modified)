@@ -1,0 +1,92 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const GestionEspecialistas = () => {
+    const [especialistas, setEspecialistas] = useState([]);
+    const [especialidades, setEspecialidades] = useState([]);
+    const [selectedEspecialidad, setSelectedEspecialidad] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const especialistasResponse = await axios.get('/api/especialistas');
+                const especialidadesResponse = await axios.get('/api/especialidades');
+                setEspecialistas(especialistasResponse.data);
+                setEspecialidades(especialidadesResponse.data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const handleAsignarEspecialidad = async (especialistaId) => {
+        try {
+            await axios.post(`/api/especialistas/${especialistaId}/especialidades`, { especialidadId: selectedEspecialidad });
+            // Actualiza la lista de especialistas después de asignar la especialidad
+            // Puedes hacer una nueva llamada a la API o actualizar el estado local
+        } catch (error) {
+            console.error('Error asignando especialidad:', error);
+        }
+    };
+
+    const handleQuitarEspecialidad = async (especialistaId, especialidadId) => {
+        try {
+            await axios.delete(`/api/especialistas/${especialistaId}/especialidades/${especialidadId}`);
+            // Actualiza la lista de especialistas después de quitar la especialidad
+        } catch (error) {
+            console.error('Error quitando especialidad:', error);
+        }
+    };
+
+    if (loading) {
+        return <div>Cargando...</div>;
+    }
+
+    return (
+        <div>
+            <h1>Gestión de Especialistas</h1>
+            <select onChange={(e) => setSelectedEspecialidad(e.target.value)}>
+                <option value="">Seleccionar Especialidad</option>
+                {especialidades.map((especialidad) => (
+                    <option key={especialidad.id} value={especialidad.id}>
+                        {especialidad.nombre}
+                    </option>
+                ))}
+            </select>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Especialidades</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {especialistas.map((especialista) => (
+                        <tr key={especialista.id}>
+                            <td>{especialista.nombre}</td>
+                            <td>
+                                {especialista.especialidades.map((esp) => (
+                                    <span key={esp.id}>
+                                        {esp.nombre} 
+                                        <button onClick={() => handleQuitarEspecialidad(especialista.id, esp.id)}>Quitar</button>
+                                    </span>
+                                ))}
+                            </td>
+                            <td>
+                                <button onClick={() => handleAsignarEspecialidad(especialista.id)}>Asignar Especialidad</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+export default GestionEspecialistas;
