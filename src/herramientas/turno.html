@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Turno - MediAppoint</title>
+    <link rel="stylesheet" href="turno.css">
+    <script type="module" src="./supabaseClient.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <span id="userId">Cargando información del usuario...</span>
+            <div id="loginForm" style="display: none;">
+                <form id="authForm" class="auth-form">
+                    <input type="email" id="email" placeholder="Correo electrónico" required>
+                    <input type="password" id="password" placeholder="Contraseña" required>
+                    <button type="submit" id="loginBtn">Iniciar Sesión</button>
+                </form>
+            </div>
+            <button id="logoutBtn" style="display: none;">Cerrar Sesión</button>
+        </div>
+        <a href="index.html" class="back-link">Volver al Inicio</a>
+        <div class="selectors">
+            <div class="selector-box">
+                <h3>Seleccionar Especialista</h3>
+                <select id="especialistaSelect">
+                    <option value="">Seleccione un especialista</option>
+                </select>
+            </div>
+            <div class="selector-box">
+                <h3>Seleccionar Especialidad</h3>
+                <select id="especialidadSelect">
+                    <option value="">Seleccione una especialidad</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <div class="calendar-nav">
+                    <button id="prevMonth">&lt;</button>
+                </div>
+                <h2 id="currentMonth"></h2>
+                <div class="calendar-nav">
+                    <button id="nextMonth">&gt;</button>
+                </div>
+            </div>
+            <div class="calendar-grid">
+                <div class="day-header">Dom</div>
+                <div class="day-header">Lun</div>
+                <div class="day-header">Mar</div>
+                <div class="day-header">Mié</div>
+                <div class="day-header">Jue</div>
+                <div class="day-header">Vie</div>
+                <div class="day-header">Sáb</div>
+            </div>
+            <div class="calendar-grid" id="calendar-days"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="time-slots" id="timeSlots">
+        <button class="close-modal" onclick="closeTimeSlots()">&times;</button>
+        <h3>Seleccionar Horario</h3>
+        <div class="time-grid"></div>
+    </div>
+
+    <div class="confirmation-modal" id="confirmationModal">
+        <h3>Confirmar Turno</h3>
+        <div class="confirmation-details" id="confirmationDetails"></div>
+        <div class="confirmation-buttons">
+            <button class="cancel-btn" onclick="cancelarConfirmacion()">Cancelar</button>
+            <button class="confirm-btn" onclick="confirmarTurno()">Confirmar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { DatabaseService } from './services/DatabaseService.js';
+        import { CalendarManager } from './services/CalendarManager.js';
+        import { UIManager } from './services/UIManager.js';
+        import { handleError, toggleElementDisplay, formatearFecha } from './utils.js';
+        
+        // Inicializar servicios
+        const dbService = new DatabaseService();
+        const calendarManager = new CalendarManager();
+        const uiManager = new UIManager();
+
+        // Inicializar la relación bidireccional
+        calendarManager.init(uiManager);
+        uiManager.init(calendarManager, dbService);
+        
+        // Renderizar el calendario inicial
+        calendarManager.generarDiasCalendario();
+        
+        // Configurar event listeners cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Configurar los event listeners del UI
+                uiManager.setupEventListeners();
+                
+                // Cargar datos iniciales
+                const { data: especialidades, error: errorEsp } = await dbService.getEspecialidades();
+                if (errorEsp) throw errorEsp;
+                
+                // Actualizar el select de especialidades
+                const especialidadSelect = document.getElementById('especialidadSelect');
+                if (especialidadSelect) {
+                    especialidadSelect.innerHTML = '<option value="">Seleccione una especialidad</option>';
+                    especialidades.forEach(esp => {
+                        const option = document.createElement('option');
+                        option.value = esp.id;
+                        option.textContent = esp.especialidad;
+                        especialidadSelect.appendChild(option);
+                    });
+                }
+                
+                // Cargar especialistas iniciales
+                const { data: especialistas, error: errorDoc } = await dbService.getEspecialistas();
+                if (errorDoc) throw errorDoc;
+                
+                // Actualizar el select de especialistas
+                const especialistaSelect = document.getElementById('especialistaSelect');
+                if (especialistaSelect) {
+                    especialistaSelect.innerHTML = '<option value="">Seleccione un especialista</option>';
+                    especialistas.forEach(esp => {
+                        const option = document.createElement('option');
+                        option.value = esp.id;
+                        option.textContent = `${esp.persona.nombre} ${esp.persona.apellido}`;
+                        especialistaSelect.appendChild(option);
+                    });
+                }
+
+                // Actualizar el calendario
+                calendarManager.generarDiasCalendario();
+            } catch (error) {
+                console.error('Error en la inicialización:', error);
+                handleError(error);
+            }
+        });
+
+        // Estado global mínimo necesario
+        window.turnoPendiente = null;
+        
+        // Funciones de ventana necesarias para los eventos onclick en HTML
+        window.closeTimeSlots = () => {
+            toggleElementDisplay('overlay', false);
+            toggleElementDisplay('timeSlots', false);
+            toggleElementDisplay('confirmationModal', false);
+        };
+        
+        window.cancelarConfirmacion = () => {
+            toggleElementDisplay('confirmationModal', false);
+            toggleElementDisplay('overlay', false);
+            window.turnoPendiente = null;
+        };
+
+        window.confirmarTurno = async () => {
+            if (!window.turnoPendiente) return;
+            try {
+                const { error } = await dbService.crearTurno(window.turnoPendiente);
+                if (error) throw error;
+                
+                alert('Turno registrado exitosamente');
+                window.closeTimeSlots();
+                window.cancelarConfirmacion();
+            } catch (error) {
+                handleError(error, 'Error al registrar el turno');
+            }
+        };
+    </script>
+</body>
+</html>
