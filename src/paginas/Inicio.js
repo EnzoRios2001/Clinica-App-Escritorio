@@ -156,12 +156,12 @@ function Inicio() {
       <div className="categories">
         <div className="categories-grid">
           <button onClick={() => navigate('/gestion-especialistas')}><span>Gestión de Especialistas</span></button>
+          <button onClick={() => navigate('/gestion-turnos')}><span>Gestión de Turnos</span></button>
           <button><span>Pacientes</span></button>
           <button><span>Horarios</span></button>
           <button><span>Reportes</span></button>
           <button><span>Configuración</span></button>
           <button><span>Notificaciones</span></button>
-          <button><span>Mensajes</span></button>
           <button><span>Ayuda</span></button>
         </div>
       </div>

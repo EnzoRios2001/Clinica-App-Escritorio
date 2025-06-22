@@ -9,6 +9,7 @@ import ResetPassword from "./paginas/ResetPassword";
 import GestionUsuarios from "./paginas/GestionUsuarios";
 import Perfil from "./paginas/Perfil";
 import GestionEspecialistas from "./paginas/GestionEspecialistas";
+import GestionTurnos from "./paginas/GestionTurnos";
 
 import { supabase } from "./supabase/client";
 
@@ -39,6 +40,7 @@ function App() {
         <Route path="/gestion-usuarios" element={<GestionUsuarios />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/gestion-especialistas" element={<GestionEspecialistas />} />
+        <Route path="/gestion-turnos" element={<GestionTurnos />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
