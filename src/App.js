@@ -15,7 +15,9 @@ import GestionUsuarios from "./paginas/GestionUsuarios";
 import GestionEspecialistas from "./paginas/GestionEspecialistas";
 import GestionTurnos from "./paginas/GestionTurnos";
 import RegistrarUsuarios from './paginas/RegistrarUsuarios';
+import RecuperarPassword from './paginas/RecuperarPassword';
 import Datos from './paginas/Datos';
+import Emergencias from './paginas/Emergencias';
 
 // Redirección para GitHub Pages SPA
 if (window.location.search.startsWith('?redirect=')) {
@@ -144,6 +146,23 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/recuperar-password"
+          element={
+            <PrivateRoute>
+              <RecuperarPassword />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/emergencias"
+          element={
+            <PrivateRoute>
+              <Emergencias/>
+            </PrivateRoute>
+          }
+        />
+        
         {/* Ruta para páginas no encontradas */}
         <Route path="*" element={<div>Página no encontrada</div>} />
       </Routes>

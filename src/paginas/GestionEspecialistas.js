@@ -13,6 +13,33 @@ function GestionEspecialistas() {
   const [especialidadesDisponibles, setEspecialidadesDisponibles] = useState([]);
   const [diasSemana, setDiasSemana] = useState([]);
 
+    // --- VERIFICACIÓN DE ROL ADMINISTRACION ---
+  useEffect(() => {
+    const verificarRolAdministracion = async () => {
+      // 1. Obtener usuario autenticado y su uuid
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+      const uuid = user.id;
+      // 2. Verificar si tiene el rol administracion en rol_persona
+      const { data: roles, error: rolError } = await supabase
+        .from('rol_persona')
+        .select('rol')
+        .eq('id', uuid)
+        .eq('rol', 'administracion');
+      if (rolError || !roles || roles.length === 0) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+    };
+    verificarRolAdministracion();
+  }, [navigate]);
+  // --- FIN VERIFICACIÓN DE ROL ADMINISTRACION ---
+
   useEffect(() => {
     cargarEspecialistas();
     cargarEspecialidadesDisponibles();
@@ -62,7 +89,8 @@ function GestionEspecialistas() {
           hora_inicio,
           hora_fin,
           dia_semana,
-          id_especialista
+          id_especialista,
+          cupos
         `)
         .in('id_especialista', especialistasIds);
 
@@ -198,7 +226,8 @@ function GestionEspecialistas() {
         const horariosToInsert = editingUser.horarios.map(({ id_horario, dia_nombre, ...horario }) => ({
           ...horario,
           id_especialista: editingUser.id,
-          dia_semana: parseInt(horario.dia_semana) // Asegurarnos de que sea número
+          dia_semana: parseInt(horario.dia_semana), // Asegurarnos de que sea número
+          cupos: parseInt(horario.cupos) || 1 // Cupos como número, valor por defecto 1
         }));
 
         const { error: insertHorariosError } = await supabase
@@ -276,26 +305,20 @@ function GestionEspecialistas() {
   };
 
   const eliminarUsuario = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+    if (window.confirm('¿Está seguro de que desea quitar el rol especialista a este usuario?')) {
       try {
-        // Primero eliminar los roles del usuario
+        // Eliminar solo el rol especialista del usuario en rol_persona
         const { error: rolError } = await supabase
           .from('rol_persona')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .eq('rol', 'especialista');
 
         if (rolError) throw rolError;
 
-        // Luego eliminar el usuario
-        const { error: userError } = await supabase
-          .from('persona')
-          .delete()
-          .eq('id', id);
-
-        if (userError) throw userError;
-
+        await cargarEspecialistas(); // Refrescar la lista
       } catch (error) {
-        setErrorMessage("Error al eliminar usuario: " + error.message);
+        setErrorMessage("Error al quitar el rol especialista: " + error.message);
       }
     }
   };
@@ -351,6 +374,7 @@ function GestionEspecialistas() {
                       <span className="horario-tiempo">
                         {horario.hora_inicio?.substring(0, 5)} - {horario.hora_fin?.substring(0, 5)}
                       </span>
+                      <span className="horario-cupos">Cupos: {horario.cupos}</span>
                     </div>
                   ))}
                 </td>
@@ -447,6 +471,13 @@ function GestionEspecialistas() {
                       type="time"
                       value={horario.hora_fin}
                       onChange={(e) => handleHorarioChange(horario.id_horario, 'hora_fin', e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      value={horario.cupos || ''}
+                      placeholder="Cupos"
+                      onChange={(e) => handleHorarioChange(horario.id_horario, 'cupos', e.target.value)}
                     />
                     <button type="button" onClick={() => handleDeleteHorario(horario.id_horario)}>
                       Eliminar

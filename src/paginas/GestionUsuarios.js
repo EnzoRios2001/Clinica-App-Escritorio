@@ -13,6 +13,33 @@ function GestionUsuarios() {
   const [availableRoles, setAvailableRoles] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); // Estado para la búsqueda
 
+  // --- VERIFICACIÓN DE ROL ADMINISTRACION ---
+  useEffect(() => {
+    const verificarRolAdministracion = async () => {
+      // 1. Obtener usuario autenticado y su uuid
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+      const uuid = user.id;
+      // 2. Verificar si tiene el rol administracion en rol_persona
+      const { data: roles, error: rolError } = await supabase
+        .from('rol_persona')
+        .select('rol')
+        .eq('id', uuid)
+        .eq('rol', 'administracion');
+      if (rolError || !roles || roles.length === 0) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+    };
+    verificarRolAdministracion();
+  }, [navigate]);
+  // --- FIN VERIFICACIÓN DE ROL ADMINISTRACION ---
+
   useEffect(() => {
     cargarUsuarios();
     cargarRolesDisponibles();

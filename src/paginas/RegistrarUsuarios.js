@@ -10,6 +10,33 @@ function RegistrarUsuarios() {
     const [newUserId, setNewUserId] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
 
+      // --- VERIFICACIÓN DE ROL ADMINISTRACION ---
+  useEffect(() => {
+    const verificarRolAdministracion = async () => {
+      // 1. Obtener usuario autenticado y su uuid
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+      const uuid = user.id;
+      // 2. Verificar si tiene el rol administracion en rol_persona
+      const { data: roles, error: rolError } = await supabase
+        .from('rol_persona')
+        .select('rol')
+        .eq('id', uuid)
+        .eq('rol', 'administracion');
+      if (rolError || !roles || roles.length === 0) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+    };
+    verificarRolAdministracion();
+  }, [navigate]);
+  // --- FIN VERIFICACIÓN DE ROL ADMINISTRACION ---
+
     const handleRegister = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -42,7 +69,7 @@ function RegistrarUsuarios() {
             if (error) throw error;
 
             // Esperar 2 segundos antes de insertar en la tabla persona
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             // Crear registro en la tabla persona
             const { error: personaError } = await supabase

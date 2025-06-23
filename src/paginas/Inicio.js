@@ -28,14 +28,16 @@ function Inicio() {
 
       <div className="categories">
         <div className="categories-grid">
-          <Link to="/gestion-turnos">
+          <Link to="/gestion-turnos" style={{ textDecoration: 'none' }}>
             <button><span>Gestion de Turnos</span></button>
           </Link>
-          <Link to="/recuperar-password">
+          <Link to="/recuperar-password" style={{ textDecoration: 'none' }}>
             <button><span>Cambiar Contraseña</span></button>
           </Link>
-          <button><span>Emergencias</span></button>
-          <Link to="/datos-estudio">
+          <Link to="/emergencias" style={{ textDecoration: 'none' }}>
+            <button><span>Emergencias</span></button>
+          </Link>
+          <Link to="/datos-estudio" style={{ textDecoration: 'none' }}>
             <button><span>Datos de Estudio</span></button>
           </Link>
         </div>

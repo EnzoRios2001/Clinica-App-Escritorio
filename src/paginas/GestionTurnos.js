@@ -14,6 +14,33 @@ function GestionTurnos() {
   const [reprogramarData, setReprogramarData] = useState({});
   const navigate = useNavigate();
 
+    // --- VERIFICACIÓN DE ROL ADMINISTRACION ---
+  useEffect(() => {
+    const verificarRolAdministracion = async () => {
+      // 1. Obtener usuario autenticado y su uuid
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+      const uuid = user.id;
+      // 2. Verificar si tiene el rol administracion en rol_persona
+      const { data: roles, error: rolError } = await supabase
+        .from('rol_persona')
+        .select('rol')
+        .eq('id', uuid)
+        .eq('rol', 'administracion');
+      if (rolError || !roles || roles.length === 0) {
+        alert("No posee rol administracion");
+        navigate("/");
+        return;
+      }
+    };
+    verificarRolAdministracion();
+  }, [navigate]);
+  // --- FIN VERIFICACIÓN DE ROL ADMINISTRACION ---
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,10 +118,26 @@ function GestionTurnos() {
     try {
       const { data: registros, error } = await supabase
         .from('estado_solicitudes_turno')
-        .select('*, persona:cambiado_por (nombre, apellido)');
+        .select('*');
 
       if (error) throw error;
-      setRegistroData(registros);
+
+      // Obtener los datos de la persona para cada registro
+      const registrosConPersona = await Promise.all(
+        registros.map(async (registro) => {
+          let persona = null;
+          if (registro.cambiado_por) {
+            const { data } = await supabase
+              .from('persona')
+              .select('nombre, apellido')
+              .eq('id', registro.cambiado_por)
+              .single();
+            persona = data;
+          }
+          return { ...registro, persona };
+        })
+      );
+      setRegistroData(registrosConPersona);
     } catch (error) {
       alert('Error al cargar el registro: ' + error.message);
     }
