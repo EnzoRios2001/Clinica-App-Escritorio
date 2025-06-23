@@ -10,6 +10,8 @@ function GestionTurnos() {
   const [sortColumn, setSortColumn] = useState('cambiado_en');
   const [sortDirection, setSortDirection] = useState('desc');
   const [expandedRows, setExpandedRows] = useState({});
+  const [reprogramandoId, setReprogramandoId] = useState(null);
+  const [reprogramarData, setReprogramarData] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +41,8 @@ function GestionTurnos() {
         query = query.eq('estado', 'confirmado');
       } else if (filtroActual === 'rechazados') {
         query = query.or('estado.eq.rechazado,estado.eq.cancelado');
+      } else if (filtroActual === 'reprogramados') {
+        query = query.eq('estado', 'reprogramado');
       }
 
       const { data: turnosData, error } = await query;
@@ -195,6 +199,76 @@ function GestionTurnos() {
     setSortColumn(column);
   };
 
+  const handleReprogramarClick = (turno) => {
+    setReprogramandoId(turno.id);
+    setReprogramarData({
+      fecha_turno: turno.fecha_turno,
+      hora_turno: turno.hora_turno,
+      id_especialista: turno.id_especialista,
+      id_especialidad: turno.id_especialidad,
+      id_dia: turno.id_dia
+    });
+  };
+
+  const handleReprogramarChange = (e) => {
+    const { name, value } = e.target;
+    setReprogramarData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const confirmarReprogramacion = async (turno) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      const { data: userData, error: userError } = await supabase
+        .from('persona')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      if (userError) throw userError;
+      const { error: errorUpdate } = await supabase
+        .from('solicitudes_turno')
+        .update({
+          ...reprogramarData,
+          estado: 'reprogramado'
+        })
+        .eq('id', turno.id);
+      if (errorUpdate) throw errorUpdate;
+      const { error } = await supabase
+        .from('estado_solicitudes_turno')
+        .insert({
+          id_turno: turno.id,
+          estado_nuevo: 'reprogramado',
+          cambiado_por: userData.id
+        });
+      if (error) throw error;
+      alert('Turno reprogramado correctamente');
+      setReprogramandoId(null);
+      cargarTurnos();
+    } catch (error) {
+      alert('Error al reprogramar el turno: ' + error.message);
+    }
+  };
+
+  // Diccionarios para mostrar texto en vez de id
+  const diasSemana = {
+    1: 'Lunes',
+    2: 'Martes',
+    3: 'Miércoles',
+    4: 'Jueves',
+    5: 'Viernes',
+    6: 'Sábado',
+    7: 'Domingo'
+  };
+  const especialidades = {
+    1: 'General',
+    2: 'Cardiología',
+    3: 'Pediatría',
+    4: 'Ginecología'
+  };
+
   return (
     <div className="container">
       <button className="volver-btn" onClick={() => navigate('/')}>
@@ -233,6 +307,12 @@ function GestionTurnos() {
         >
           Registro de Estados
         </button>
+        <button 
+          className={`filtro-btn btn-reprogramados ${filtroActual === 'reprogramados' ? 'activo' : ''}`}
+          onClick={() => setFiltroActual('reprogramados')}
+        >
+          Turnos Reprogramados
+        </button>
       </div>
 
       {filtroActual === 'registro' ? (
@@ -267,14 +347,49 @@ function GestionTurnos() {
                     </td>
                     <td>{turno.id}</td>
                     <td>{turno.persona?.dni}</td>
-                    <td>{turno.id_dia}</td>
-                    <td>{turno.fecha_turno}</td>
-                    <td>{turno.hora_turno}</td>
+                    <td>
+                      {reprogramandoId === turno.id ? (
+                        <input
+                          type="text"
+                          name="id_dia"
+                          value={reprogramarData.id_dia || ''}
+                          onChange={handleReprogramarChange}
+                          style={{width:'80px'}}
+                        />
+                      ) : (
+                        diasSemana[turno.id_dia] || turno.id_dia
+                      )}
+                    </td>
+                    <td>
+                      {reprogramandoId === turno.id ? (
+                        <input
+                          type="date"
+                          name="fecha_turno"
+                          value={reprogramarData.fecha_turno || ''}
+                          onChange={handleReprogramarChange}
+                        />
+                      ) : (
+                        turno.fecha_turno
+                      )}
+                    </td>
+                    <td>
+                      {reprogramandoId === turno.id ? (
+                        <input
+                          type="time"
+                          name="hora_turno"
+                          value={reprogramarData.hora_turno || ''}
+                          onChange={handleReprogramarChange}
+                        />
+                      ) : (
+                        turno.hora_turno
+                      )}
+                    </td>
                     <td>{turno.estado || 'Sin estado'}</td>
                     <td>
                       <select 
                         className="estado-select"
                         onChange={(e) => actualizarEstado(turno.id, e.target.value)}
+                        disabled={reprogramandoId === turno.id}
                       >
                         <option value="">Seleccionar estado</option>
                         <option value="pendiente">Pendiente</option>
@@ -284,19 +399,23 @@ function GestionTurnos() {
                       </select>
                     </td>
                     <td>
-                      <button 
-                        className="actualizar-btn"
-                        onClick={() => {
-                          const select = document.querySelector(`select[data-id="${turno.id}"]`);
-                          if (select && select.value) {
-                            actualizarEstado(turno.id, select.value);
-                          } else {
-                            alert('Por favor seleccione un estado');
-                          }
-                        }}
-                      >
-                        Actualizar
-                      </button>
+                      {reprogramandoId === turno.id ? (
+                        <>
+                          <button className="actualizar-btn" onClick={() => confirmarReprogramacion(turno)}>
+                            Confirmar
+                          </button>
+                          <button className="volver-btn" style={{marginLeft:4}} onClick={() => setReprogramandoId(null)}>
+                            Cancelar
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          className="actualizar-btn"
+                          onClick={() => handleReprogramarClick(turno)}
+                        >
+                          Reprogramar
+                        </button>
+                      )}
                     </td>
                   </tr>
                   {expandedRows[turno.id] && (
@@ -326,7 +445,7 @@ function GestionTurnos() {
                             </div>
                             <div className="detalle-item">
                               <div className="detalle-titulo">Especialidad</div>
-                              <div className="detalle-valor">{turno.id_especialidad}</div>
+                              <div className="detalle-valor">{especialidades[turno.id_especialidad] || turno.id_especialidad}</div>
                             </div>
                             <div className="detalle-item">
                               <div className="detalle-titulo">ID Turno</div>

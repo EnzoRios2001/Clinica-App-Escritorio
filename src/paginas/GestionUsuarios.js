@@ -11,6 +11,7 @@ function GestionUsuarios() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(""); // Estado para la búsqueda
 
   useEffect(() => {
     cargarUsuarios();
@@ -176,9 +177,18 @@ function GestionUsuarios() {
     }
   };
 
+  // Filtrado por rol y búsqueda
   const usuariosFiltrados = usuarios.filter(usuario => {
-    if (filtroActual === 'todos') return true;
-    return usuario.rol_persona?.some(rol => rol.rol === filtroActual);
+    if (filtroActual !== 'todos' && !usuario.rol_persona?.some(rol => rol.rol === filtroActual)) {
+      return false;
+    }
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (usuario.nombre && usuario.nombre.toLowerCase().includes(term)) ||
+      (usuario.apellido && usuario.apellido.toLowerCase().includes(term)) ||
+      (usuario.dni && usuario.dni.toString().includes(term))
+    );
   });
 
   return (
@@ -192,31 +202,42 @@ function GestionUsuarios() {
         </div>
       </header>
 
-      <div className="filtros-container">
-        <button
-          className={`filtro-btn btn-todos ${filtroActual === 'todos' ? 'active' : ''}`}
-          onClick={() => filtrarUsuarios('todos')}
-        >
-          Todos
-        </button>
-        <button
-          className={`filtro-btn btn-especialistas ${filtroActual === 'especialista' ? 'active' : ''}`}
-          onClick={() => filtrarUsuarios('especialista')}
-        >
-          Especialistas
-        </button>
-        <button
-          className={`filtro-btn btn-administracion ${filtroActual === 'administracion' ? 'active' : ''}`}
-          onClick={() => filtrarUsuarios('administracion')}
-        >
-          Administración
-        </button>
-        <button
-          className={`filtro-btn btn-pacientes ${filtroActual === 'paciente' ? 'active' : ''}`}
-          onClick={() => filtrarUsuarios('paciente')}
-        >
-          Pacientes
-        </button>
+      <div className="filtros-busqueda-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div className="filtros-container" style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className={`filtro-btn btn-todos ${filtroActual === 'todos' ? 'active' : ''}`}
+            onClick={() => filtrarUsuarios('todos')}
+          >
+            Todos
+          </button>
+          <button
+            className={`filtro-btn btn-especialistas ${filtroActual === 'especialista' ? 'active' : ''}`}
+            onClick={() => filtrarUsuarios('especialista')}
+          >
+            Especialistas
+          </button>
+          <button
+            className={`filtro-btn btn-administracion ${filtroActual === 'administracion' ? 'active' : ''}`}
+            onClick={() => filtrarUsuarios('administracion')}
+          >
+            Administración
+          </button>
+          <button
+            className={`filtro-btn btn-pacientes ${filtroActual === 'paciente' ? 'active' : ''}`}
+            onClick={() => filtrarUsuarios('paciente')}
+          >
+            Pacientes
+          </button>
+        </div>
+        <div className="busqueda-usuarios-container" style={{ display: 'flex', alignItems: 'center' }}>
+          <input
+            type="text"
+            className="busqueda-usuarios-input"
+            placeholder="Buscar por nombre, apellido o DNI"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       {errorMessage && (
@@ -331,4 +352,4 @@ function GestionUsuarios() {
   );
 }
 
-export default GestionUsuarios; 
+export default GestionUsuarios;
